@@ -1,10 +1,11 @@
-CC=gcc
-CFLAGS=-Wall -g --std=c99 -pthread -lm
+CC=g++
+CFLAGS=-Wall -g --std=c++11 -pthread -lm
+DEPS= City.h Organism.h
 TARGET=tsp
 
 all: $(TARGET)
 
 $(TARGET):
-	$(CC) $(TARGET).c -o $(TARGET) $(CFLAGS)
+	$(CC) $(TARGET).cpp $(DEPS) -o $(TARGET) $(CFLAGS)
 clean:
 	rm $(TARGET)

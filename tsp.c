@@ -1,8 +1,12 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <math.h>
+#include <float.h>
 
-#define NUM_CITIES 5
+#include "City.h"
+#include "Organism.h"
+
+#define POP_SIZE 10
 
 #define DEBUG
 
@@ -21,47 +25,42 @@
 
 double DISTANCE[NUM_CITIES][NUM_CITIES];
 
-typedef struct {
-    double x;
-    double y;
-} City;
-
-//typedef int Path[NUM_CITIES];
-
-void city_init(City* city, double x, double y) {
-    if(city != NULL) {
-        city->x = x;
-        city->y = y;
+int* gen_path(int seed) {
+    int added[NUM_CITIES];
+    for(int i = 0; i < NUM_CITIES; i++) {
+        added[i] = 0; 
     }
-    //DEBUG
-    else {
-        DEBUG_PRINT("city_init failed. city pointer is NULL.\n");
+
+    int* path = malloc(sizeof(int[NUM_CITIES]));
+    
+    for(int i = 0; i < NUM_CITIES; i++) {
+        while(1) {
+            int random = rand() % NUM_CITIES;
+            if(!added[random]) {
+                path[i] = random;
+                added[random] = 1;
+                //DEBUG_PRINT("%d added.\n", path[i]);
+                
+                break;
+            }
+            else {
+                random = rand() % NUM_CITIES;
+            }
+        }
     }
-}
 
-void city_print(City* city) {
-    printf("City: x:%.02f, y:%.02f\n", city->x, city->y);
-}
-
-double city_calc_distance(City* a, City* b) {
-    return sqrt( pow(b->x - a->x, 2) + pow(b->y - a->y, 2) );
-}
-
-void path_calc_fitness(int path[NUM_CITIES], double* total_distance) {
-    *total_distance = 0.0;
-    for(int i = 1; i < NUM_CITIES; i++) {
-        //Calculate the distance between each City in the Path
-        *total_distance += DISTANCE[path[i-1]][path[i]];
-    }
-    //Calculate the distance back to the home City
-    *total_distance += DISTANCE[path[NUM_CITIES-1]][path[0]];
+    return path;
 }
 
 int main(int argc, char** argv) {
+    int NUM_CITIES = 5;
+
     char* filename;
     FILE* file;
     City cities[NUM_CITIES];
-
+    
+    srand(0);
+    
     //Check if a filename is given
     if(argc > 1) {
         filename = argv[1];
@@ -93,16 +92,30 @@ int main(int argc, char** argv) {
     
     DEBUG_PRINT("DISTANCE lookup table populated.\n");
     
-    //Make a Path
-    //Path* path = malloc(sizeof(Path));
-    int path[NUM_CITIES];
-    for(int i = 0; i < NUM_CITIES; i++) {
-        path[i] = i;
+    int** paths = malloc(sizeof(int[POP_SIZE][NUM_CITIES]));
+    for(int i = 0; i < POP_SIZE; i++) {
+        paths[i] = gen_path(1);
+        DEBUG_PRINT("Path %d created:", i);
+        for(int j = 0; j < NUM_CITIES; j++) { 
+            DEBUG_PRINT(" %d", paths[i][j]);
+        }
+        DEBUG_PRINT("\n");
     }
     
-    double distance;
-    path_calc_fitness(path, &distance);
- 
-    printf("Distance of path 1: %.02f\n", distance); 
+    int fittestIndex = 0;
+    double fittestDist = DBL_MAX;
+    double distance = 0;
+    for(int i = 0; i < POP_SIZE; i++) {
+        path_calc_fitness(paths[i], &distance);
+        if(distance < fittestDist) {
+            fittestIndex = i;
+            fittestDist = distance;
+        }
+
+        printf("Distance of path %d: %.02f\n", i, distance); 
+    }
+    
+    printf("Path %d is fittest. Distance: %.02f\n", fittestIndex, fittestDist); 
+
     return 0;
 }
