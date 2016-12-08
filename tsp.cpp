@@ -56,7 +56,6 @@ void* genetic(void* data) {
         least_fit[g] = population[id][0];
         deathCount[g] = 0;  
         
-        Organism* org = population[id];
         //Find the fittest of this generation
         for(int p = 0; p < POP; p++) {
             if(population[id][p].isMoreFit(&fittest[g])) {
@@ -67,9 +66,9 @@ void* genetic(void* data) {
                 least_fit[g] = population[id][p];
             }
         }
-        DEBUG_PRINT("[Trd %02d Gen %03d] Fittest: %f\n",
+        DEBUG_PRINT("[Trd %02d Gen %03d] Fittest: %.02f\n",
             id, g, fittest[g].getFitness() );
-        DEBUG_PRINT("[Trd %02d Gen %03d] Least Fit: %f\n",
+        DEBUG_PRINT("[Trd %02d Gen %03d] Least Fit: %.02f\n",
             id, g, least_fit[g].getFitness() );
         
         double percentile = 0.0;
@@ -82,10 +81,12 @@ void* genetic(void* data) {
                 (fittest[g].getFitness() - least_fit[g].getFitness());
             
             if( percentile > SURVIVAL_RATE) {
-                DEBUG_PRINT("An Organism died (%%: %.02f).\n", percentile);
-                DEBUG_PRINT("Fitness %.02f.\n", population[id][p].getFitness());
-                population[id][p] = Organism();
-                DEBUG_PRINT("Fitness %.02f.\n", population[id][p].getFitness());
+                DEBUG_PRINT("\tAn Organism died (%%: %.02f).\n", percentile);
+                DEBUG_PRINT("\tFitness %.02f.\n", population[id][p].getFitness());
+                //population[id][p] = Organism();
+                population[id][p] = Organism(fittest[g]);
+                //population[id][p] = Organism(fittest[g], p);
+                DEBUG_PRINT("\tFitness %.02f.\n", population[id][p].getFitness());
                 deathCount[g]++;
             }
         }

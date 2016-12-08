@@ -49,14 +49,26 @@ private:
         }
     }
 
-    void generateMutatedPath(const Organism& ancestor, int& swaps) {
+    void generateMutatedPath(const Organism& ancestor, int swaps) {
+        this->path = new City[NUM_CITIES];
         int random1, random2;
+        
+        //Copy every value from ancestor.path into this->path
+        for(int i = 0; i < NUM_CITIES; i++) {
+            this->path[i] = ancestor.path[i];
+        }
+        
+        //Swap some of the items
         for(int i = 0; i < swaps; i++) {
             random1 = rand() % NUM_CITIES;
             do {
                 random2 = rand() % NUM_CITIES;
             }
             while(random1 == random2);
+            
+            City pointer = this->path[random1];
+            this->path[random1] = this->path[random2];
+            this->path[random2] = pointer;
         }
     }
 public:
@@ -68,7 +80,7 @@ public:
     }
     
     //Creates a new Organism based on an ancestor Organism.
-    Organism(const Organism& ancestor, int& swaps) {
+    Organism(const Organism& ancestor, int swaps = 25) {
         generateMutatedPath(ancestor, swaps);
         this->alive = true;
         calcFitness();
