@@ -23,7 +23,7 @@
 #endif
 
 const int THREADS = 4;
-const int POP = 1000;
+const int POP = 100;
 const int GEN = 1;
 const double SURVIVAL_RATE = 0.70;
 const int NUM_CITIES = 100;
@@ -77,7 +77,7 @@ void* genetic(void* data) {
                 (fittest[g].getFitness() - least_fit[g].getFitness());
             
             if( percentile > SURVIVAL_RATE) {
-                if(p % 2 == 0){
+                if(rand() % 2 == 0){
                     population[id][p] = Organism(fittest[g], p);
                 }
                 else {
