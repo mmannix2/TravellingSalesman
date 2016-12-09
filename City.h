@@ -8,6 +8,7 @@ extern const int NUM_CITIES;
 
 class City {
 private:
+    int number;
     double x;
     double y;
 
@@ -16,17 +17,19 @@ public:
     //City cities[NUM_CITIES];
 
     City() {
+        this->number = -1;
         this->x = 0;
         this->y = 0;
     }
     
-    City(double x, double y) {
+    City(int number, double x, double y) {
+        this->number = number;
         this->x = x;
         this->y = y;
     }
 
     void print() {
-        printf("City: x:%.02f, y:%.02f\n", this->x, this->y);
+        printf("City #%d: x:%.02f, y:%.02f\n", this->number, this->x, this->y);
     }
 
     double calcDistance(City* other) {
@@ -34,7 +37,8 @@ public:
     }
 
     double getX() { return this->x; }
-    
     double getY() { return this->y; }
+    
+    int getNumber() { return this->number; }
 };
 #endif

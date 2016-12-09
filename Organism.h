@@ -93,9 +93,12 @@ public:
     bool isAlive() { return alive; }
 
     void print() {
-        printf("Organism:\n\tPath:");
+        printf("Organism:\n\tFitness: %.02f\n\tPath:", this->fitness);
         for(int i = 0; i < NUM_CITIES; i++) {
-            //printf(" %d", this->path[i].getNumber());
+            if(i % 10 == 0) {
+                printf("\n\t\t");
+            }
+            printf(" %02d", this->path[i].getNumber());
         }
     }
 
