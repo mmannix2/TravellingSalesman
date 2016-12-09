@@ -5,12 +5,11 @@
 #include "City.h"
 
 extern const int NUM_CITIES;
-extern City* CITIES;
+extern City CITIES[];
 
 class Organism{
 private:
     City* path;
-    bool alive;
     double fitness;
 
     void calcFitness() {
@@ -71,26 +70,43 @@ private:
             this->path[random2] = pointer;
         }
     }
+
+    void randomizePath() {
+        int random;
+        bool cityUsed[NUM_CITIES];
+        
+        //Create an array of bools starting out false
+        for(int i = 0; i < NUM_CITIES; i++) {
+            cityUsed[i] = false;
+        }
+
+        //Populate the path with City objs from CITIES
+        for(int i = 0; i < NUM_CITIES; i++) {
+            //Find a random City number that hasn't been used
+            do {     
+                random = rand() % NUM_CITIES;
+            }
+            while(cityUsed[random]);
+            
+            //Use the City number
+            path[i] = CITIES[random];
+            cityUsed[random] = true;
+        }
+    }
+
 public:
     //Default constructor. Creates an Organism with a random path.
     Organism() {
         generateRandomPath(CITIES);
-        this->alive = true;
-        calcFitness();
-    }
-    
-    //Creates a new Organism based on an ancestor Organism.
-    Organism(const Organism& ancestor, int swaps = 25) {
-        generateMutatedPath(ancestor, swaps);
-        this->alive = true;
         calcFitness();
     }
     
     double getFitness() { return this->fitness; }
 
-    void mutate();
-    void die() { this->alive = false; }
-    bool isAlive() { return alive; }
+    void mutate() {
+        randomizePath();
+        calcFitness();
+    }
 
     void print() {
         printf("Organism:\n\tFitness: %.02f\n\tPath:", this->fitness);
@@ -100,6 +116,7 @@ public:
             }
             printf(" %02d", this->path[i].getNumber());
         }
+        printf("\n");
     }
 
     bool isMoreFit(Organism* other) {
@@ -108,18 +125,6 @@ public:
 
     bool isMoreFit(double fitness) {
         return this->fitness < fitness;
-    }
-    
-    void operator = (const Organism& other) {
-        for(int i = 0; i < NUM_CITIES; i++) {
-            this->path[i] = other.path[i];
-        }
-        this->alive = other.alive;
-        calcFitness();
-    }
-    
-    ~Organism() {
-        delete [] path;
     }
 };
 #endif
