@@ -3,11 +3,10 @@
 #include <pthread.h>
 #include <math.h>
 #include <float.h>
+#include <mpi.h>
 
 #include "City.h"
 #include "Organism.h"
-
-#define DEBUG
 
 #ifdef DEBUG
 #define DEBUG_PRINT(...) \
@@ -22,9 +21,9 @@
     while(0)
 #endif
 
-const int THREADS = 8;
-const int POP = 1000;
-const int GEN = 10;
+const int THREADS = 4;
+const int POP = 1000000;
+const int GEN = 1000;
 const double SURVIVAL_RATE = 0.50;
 const double MUTATE_RATE = 0.50;
 const int NUM_CITIES = 100;
@@ -110,9 +109,20 @@ void* genetic(void* data) {
 }    
 
 int main(int argc, char** argv) {
+    int rank, size;    
+    int ids[THREADS];
     pthread_t threads[THREADS];
     Organism* best = NULL;
     
+    MPI_Init(&argc, &argv);
+
+    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
+    MPI_Comm_size(MPI_COMM_WORLD, &size);
+    
+    double best_fitness; //The best fitness score
+    int best_path[NUM_CITIES]; //The path that yields the best fittness
+    int best_process; //The process from which the best fitness originated
+
     const char* filename = "cities.txt";
 
     FILE* file;
@@ -124,7 +134,7 @@ int main(int argc, char** argv) {
     //Check if a seed is given
     if(argc > 1) {
         seed = atoi(argv[1]);
-        printf("Using %d as a seed.\n", seed);
+        DEBUG_PRINT("Using %d as a seed.\n", seed);
     }
     
     //Open the file
@@ -140,7 +150,7 @@ int main(int argc, char** argv) {
     DEBUG_PRINT("Cities loaded.\n");
     
     //TEST
-    Organism o1 = Organism();
+    /*Organism o1 = Organism();
     Organism o2 = Organism();
     
     o1.print();
@@ -149,8 +159,8 @@ int main(int argc, char** argv) {
     o1.breed(&o2);
 
     o1.print();
+    */
 
-    int ids[THREADS];
     //Spawn threads
     for(int t = 0; t < THREADS; t++) {
         ids[t] = t; 
@@ -161,10 +171,32 @@ int main(int argc, char** argv) {
 
     //Join the threads
     for(int t = 0; t < THREADS; t++) {
-        pthread_join(threads[t], (void**) &best);
-        printf("Best from thread %d:\n", t);
+        Organism* temp = NULL;
+        pthread_join(threads[t], (void**) &temp);
+        if(best == NULL || temp->getFitness() < best->getFitness()) {
+            best = temp;
+        }
+        DEBUG_PRINT("Process %d, thread %d's best fitness: %.02f\n",
+            rank,
+            t,
+            best->getFitness());
+    }
+    
+    //Give every process the best_fitness
+    double temp = best->getFitness();
+    MPI_Allreduce(&temp, &best_fitness, 1, MPI_DOUBLE, MPI_MIN, MPI_COMM_WORLD);
+    
+    //Print out the best path
+    if(best_fitness == best->getFitness()) {
+        DEBUG_PRINT("Absolute best: %.02f (from process %d)\n",
+            best_fitness, 
+            rank);
         best->print();
     }
-     
+    
+    //Shut down MPI & pthreads
+    MPI_Finalize();
     pthread_exit(NULL);
+    
+    exit(0);
 }
