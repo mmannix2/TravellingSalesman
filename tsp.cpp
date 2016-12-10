@@ -120,8 +120,6 @@ int main(int argc, char** argv) {
     MPI_Comm_size(MPI_COMM_WORLD, &size);
     
     double best_fitness; //The best fitness score
-    int best_path[NUM_CITIES]; //The path that yields the best fittness
-    int best_process; //The process from which the best fitness originated
 
     const char* filename = "cities.txt";
 

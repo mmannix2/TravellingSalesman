@@ -5,8 +5,7 @@ TARGET=tsp
 all: $(TARGET)
 
 $(TARGET):
-	#$g++ $(TARGET).cpp $(DEPS) -o $(TARGET) $(CFLAGS)
 	mpic++ -o $(TARGET) $(CFLAGS) $(DEPS) $(TARGET).cpp
-
+	#Run with "mpirun -np X tsp Y" Where X = # processes and Y = seed.
 clean:
 	rm $(TARGET)
