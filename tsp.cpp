@@ -21,7 +21,7 @@
     while(0)
 #endif
 
-const int THREADS = 4;
+const int THREADS = 8;
 const int POP = 1000000;
 const int GEN = 1000;
 const double SURVIVAL_RATE = 0.50;
