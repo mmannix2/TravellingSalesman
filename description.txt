@@ -1,0 +1,55 @@
+CPSC 425
+Travelling Salesman Approximation
+Matthew Mannix
+
+My genetic algorithm uses a hybrid approach to model various separate
+populations. There are 4 unique processes that each have a population of
+500,000 Organisms like separate islands for a grand total of 2,000,000 starting
+Organisms. Each island has 8 threads that subdivide the population into 8
+tribes of 62,500 Organisms each.
+
+At the beginning, every tribe is populated with completely random Organisms.
+Each generation the alpha (most fit) Organism and the omega (least fit)
+Organism are identified. I find the difference between the fitness rating of
+the alpha and the omega and check to make sure each other Organism is at least
+as fit as the average of the alpha and the omega. If an Organism is less fit
+than the the average of the alpha and the omega, it dies and is replaced with a
+either completely new randomly generated Organism or an Organism based on the
+alpha of that Organism's tribe. The replacement is randomly decided and each
+possibility has a 50% chance. 
+
+After 100 generations have occurred, only the fittest Organism from each
+population leaves thier home island and comes into contact with the fittest
+Organism from each of the other islands. Once the Organisms meet, only the
+strongest survives and is printed to the screen as the best solution.
+
+My program uses 4 processes with 8 threads per process.
+
+Output from running my program with:
+
+4 Processes
+500,000 Population
+8 Threads per Process
+62,500 Population per Thread per Process
+
+100 Generations
+0.50 Survival Rate
+0.50 Mutation Rate
+
+Run time about 30 Minutes
+
+Organism:
+        Fitness: 7978.32
+        Path:
+            12 53 23 88 48 91 27 87 04 51
+            50 41 37 96 34 06 89 26 73 83
+            36 85 52 42 86 15 71 46 16 62
+            45 84 05 17 93 79 94 56 97 21
+            01 95 78 58 32 70 68 69 11 20
+            03 39 38 49 33 80 14 07 02 76
+            74 08 29 44 99 65 35 47 67 60
+            59 18 90 09 19 28 77 75 98 00
+            43 25 13 40 24 64 55 30 72 31
+            82 66 61 57 63 10 54 81 92 22
+
+

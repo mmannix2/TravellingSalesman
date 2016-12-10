@@ -22,8 +22,8 @@
 #endif
 
 const int THREADS = 8;
-const int POP = 1000000;
-const int GEN = 1000;
+const int POP = 500000;
+const int GEN = 100;
 const double SURVIVAL_RATE = 0.50;
 const double MUTATE_RATE = 0.50;
 const int NUM_CITIES = 100;
