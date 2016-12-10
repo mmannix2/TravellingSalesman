@@ -48,18 +48,19 @@ private:
         }
     }
 
-    void generateMutatedPath(const Organism& ancestor, int swaps) {
+    void inheritPath(Organism* ancestor) {
         this->path = new City[NUM_CITIES];
         int random1, random2;
-        
+        int swaps = rand() % 50;
+
         //Copy every value from ancestor.path into this->path
         for(int i = 0; i < NUM_CITIES; i++) {
-            this->path[i] = ancestor.path[i];
+            this->path[i] = ancestor->path[i];
         }
         
         //Swap some of the items
         for(int i = 0; i < swaps; i++) {
-            random1 = rand() % NUM_CITIES;
+            random1 = rand() % (NUM_CITIES /2);
             do {
                 random2 = rand() % NUM_CITIES;
             }
@@ -105,6 +106,11 @@ public:
 
     void mutate() {
         randomizePath();
+        calcFitness();
+    }
+
+    void breed(Organism* ancestor) {
+        inheritPath(ancestor);
         calcFitness();
     }
 

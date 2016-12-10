@@ -23,21 +23,42 @@
 #endif
 
 const int THREADS = 8;
-const int POP = 1000000;
+const int POP = 1000;
 const int GEN = 10;
-const double SURVIVAL_RATE = 0.70;
+const double SURVIVAL_RATE = 0.50;
+const double MUTATE_RATE = 0.50;
 const int NUM_CITIES = 100;
 
 pthread_mutex_t printMutex;
 
-pthread_rwlock_t fittest_lock;
-pthread_rwlock_t least_fit_lock;
-
 City CITIES[NUM_CITIES];
 Organism population[POP];
 
-Organism* fittest = NULL;
-Organism* least_fit = NULL; 
+Organism* alpha[THREADS]; //The most-fit Organism
+Organism* omega[THREADS]; //The least-fit Organism
+
+pthread_rwlock_t alpha_lock;
+pthread_rwlock_t omega_lock;
+
+int seed = 0;
+
+//For each tribe, looks for an alpha and omega Organism
+void find_alpha_and_omega(int id, int size, int start, int end) {
+    alpha[id] = &population[start];
+    omega[id] = &population[start];
+    //deathCount[g] = 0;  
+    
+    //Find the alpha of this generation
+    for(int p = start; p < end; p++) {
+        if(population[p].isMoreFit(alpha[id])) {
+            alpha[id] = &population[p];
+        }
+        
+        if(!population[p].isMoreFit(omega[id])) {
+            omega[id] = &population[p];
+        }
+    }
+}
 
 void* genetic(void* data) {
     int id = *(int*) data;
@@ -48,7 +69,7 @@ void* genetic(void* data) {
     DEBUG_PRINT("id: %d, size: %d, start: %d, end: %d\n", id, size, start, end);
 
     //Initialization
-    srand(id);
+    srand(id + seed);
     
     //Make initial population
     for(int p = start; p < end; p++) {
@@ -57,79 +78,53 @@ void* genetic(void* data) {
 
     //Simulate GEN generations
     for(int g = 0; g < GEN; g++) {
-        fittest = &population[0];
-        least_fit = &population[0];
-        //deathCount[g] = 0;  
-        
-        //Find the fittest of this generation
-        for(int p = start; p < end; p++) {
-            if(population[p].isMoreFit(fittest)) {
-                //Critical section
-                pthread_rwlock_wrlock(&fittest_lock);
-                fittest = &population[p];
-                pthread_rwlock_unlock(&fittest_lock);
-            }
-            
-            if(!population[p].isMoreFit(least_fit)) {
-                //Critical section
-                pthread_rwlock_wrlock(&least_fit_lock);
-                least_fit = &population[p];
-                pthread_rwlock_unlock(&least_fit_lock);
-            }
-        }
-        
-        //Barrier
-        if(id == 0) {
-            DEBUG_PRINT("Gen %02d Complete\nFittest: %.02f\n",
-                g,
-                fittest->getFitness());
-        }
-        
+        find_alpha_and_omega(id, size, start, end);
+
         double percentile = 0.0;
         //Kill any Organisms that are out of the SURVIVAL_RATE
         for(int p = start; p < end; p++) {
             //Make a sort of inverted percentile of fitness
             //Lower is better
             percentile = 
-                (fittest->getFitness() - population[p].getFitness()) /
-                (fittest->getFitness() - least_fit->getFitness());
+                (alpha[id]->getFitness() - population[p].getFitness()) /
+                (alpha[id]->getFitness() - omega[id]->getFitness());
             
             if( percentile > SURVIVAL_RATE) {
-                population[p].mutate();
-                //DEBUG_PRINT("An organism died.\n");
-                /*
-                if(rand() % 2 == 0){
-                    population[id][p] = Organism(fittest, p);
+                if(rand() % 100 < MUTATE_RATE * 100) {
+                    //Randomly mutate this Organism
+                    population[p].mutate();
                 }
                 else {
-                    population[id][p] = Organism();
+                    //Mix this Organism's genes with the alpha's genes
+                    population[p].breed(alpha[id]);
                 }
-                deathCount[g]++;
-                */
             }
         }
 
     }
-    return (void*) fittest;
+
+    //Find alpha and omega one last time
+    find_alpha_and_omega(id, size, start, end);
+
+    return (void*) alpha[id];
 }    
 
 int main(int argc, char** argv) {
     pthread_t threads[THREADS];
     Organism* best = NULL;
+    
+    const char* filename = "cities.txt";
 
-    char* filename;
     FILE* file;
 
     pthread_mutex_init(&printMutex, NULL);
-    pthread_rwlock_init(&fittest_lock, NULL);    
-    pthread_rwlock_init(&least_fit_lock, NULL);    
+    pthread_rwlock_init(&alpha_lock, NULL);    
+    pthread_rwlock_init(&omega_lock, NULL);    
     
-    //Check if a filename is given
+    //Check if a seed is given
     if(argc > 1) {
-        filename = argv[1];
-    }
-    else {
-        filename = "cities.txt";
+        seed = atoi(argv[1]);
+        printf("Using %d as a seed.\n", seed);
     }
     
     //Open the file
@@ -145,15 +140,15 @@ int main(int argc, char** argv) {
     DEBUG_PRINT("Cities loaded.\n");
     
     //TEST
-    /*
-    Organism o = Organism();
+    Organism o1 = Organism();
+    Organism o2 = Organism();
+    
+    o1.print();
+    o2.print();
 
-    o.print();
+    o1.breed(&o2);
 
-    o.mutate();
-
-    o.print();
-    */
+    o1.print();
 
     int ids[THREADS];
     //Spawn threads
@@ -167,10 +162,8 @@ int main(int argc, char** argv) {
     //Join the threads
     for(int t = 0; t < THREADS; t++) {
         pthread_join(threads[t], (void**) &best);
-        if(t == 0) {
-            printf("Best from thread %d:\n", t);
-            best->print();
-        }
+        printf("Best from thread %d:\n", t);
+        best->print();
     }
      
     pthread_exit(NULL);
